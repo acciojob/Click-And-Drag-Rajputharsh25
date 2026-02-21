@@ -1,57 +1,49 @@
-const container = document.querySelector('.container');
-const cubes = document.querySelectorAll('.cube');
+const container = document.getElementById("container");
+const cubes = document.querySelectorAll(".cube");
 
 let activeCube = null;
 let offsetX = 0;
 let offsetY = 0;
 
-// Initialize grid positions (optional, ensures they don't all stack at 0,0)
+// Set initial grid positions
 cubes.forEach((cube, index) => {
-    cube.style.left = `${(index % 5) * 60}px`;
-    cube.style.top = `${Math.floor(index / 5) * 60}px`;
-    
-    cube.addEventListener('mousedown', startDrag);
+  const cols = 4;
+  const spacing = 100;
+
+  const col = index % cols;
+  const row = Math.floor(index / cols);
+
+  cube.style.left = (col * spacing + 10) + "px";
+  cube.style.top = (row * spacing + 10) + "px";
+
+  cube.addEventListener("mousedown", (e) => {
+    activeCube = cube;
+    offsetX = e.clientX - cube.offsetLeft;
+    offsetY = e.clientY - cube.offsetTop;
+  });
 });
 
-function startDrag(e) {
-    activeCube = e.target;
-    activeCube.style.cursor = 'grabbing';
-    
-    // Calculate where inside the cube the user clicked
-    const rect = activeCube.getBoundingClientRect();
-    offsetX = e.clientX - rect.left;
-    offsetY = e.clientY - rect.top;
+document.addEventListener("mousemove", (e) => {
+  if (!activeCube) return;
 
-    // Listen for move and up on the window to prevent "losing" the cube if moving fast
-    window.addEventListener('mousemove', drag);
-    window.addEventListener('mouseup', stopDrag);
-}
+  const rect = container.getBoundingClientRect();
 
-function drag(e) {
-    if (!activeCube) return;
+  let newX = e.clientX - rect.left - offsetX;
+  let newY = e.clientY - rect.top - offsetY;
 
-    // Calculate new position relative to the container
-    const containerRect = container.getBoundingClientRect();
-    let newX = e.clientX - containerRect.left - offsetX;
-    let newY = e.clientY - containerRect.top - offsetY;
+  // Boundary restriction
+  const maxX = container.clientWidth - activeCube.clientWidth;
+  const maxY = container.clientHeight - activeCube.clientHeight;
 
-    // --- Boundary Constraints ---
-    const maxX = containerRect.width - activeCube.offsetWidth;
-    const maxY = containerRect.height - activeCube.offsetHeight;
+  if (newX < 0) newX = 0;
+  if (newY < 0) newY = 0;
+  if (newX > maxX) newX = maxX;
+  if (newY > maxY) newY = maxY;
 
-    // Clamp values between 0 and Max
-    newX = Math.max(0, Math.min(newX, maxX));
-    newY = Math.max(0, Math.min(newY, maxY));
+  activeCube.style.left = newX + "px";
+  activeCube.style.top = newY + "px";
+});
 
-    activeCube.style.left = `${newX}px`;
-    activeCube.style.top = `${newY}px`;
-}
-
-function stopDrag() {
-    if (activeCube) {
-        activeCube.style.cursor = 'grab';
-    }
-    activeCube = null;
-    window.removeEventListener('mousemove', drag);
-    window.removeEventListener('mouseup', stopDrag);
-}
+document.addEventListener("mouseup", () => {
+  activeCube = null;
+});
